@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cargo Planner</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg0:#0d1117;--bg1:#161b22;--bg2:#1c2330;--bg3:#2a3142;--border:#30363d;--border2:#404858;--text1:#e6edf3;--text2:#8b949e;--text3:#555f6a;--accent:#4a9eff;--adim:#1a3a5c;--accent-text:#4a9eff;--red:#ff5555;--rdim:#3a1515;--green:#3dd68c;--gdim:#0d3d2d;--green-text:#3dd68c;--amber:#ffb347;--purple:#c084fc;--pdim:rgba(168,85,247,.12);--card-shadow:0 2px 12px rgba(0,0,0,.5);}
+body.light{--bg0:#f0f2f5;--bg1:#fff;--bg2:#e8eaed;--bg3:#dde0e5;--border:#c8cdd6;--border2:#b0b8c4;--text1:#1a1d23;--text2:#555f6a;--text3:#9ba3af;--accent:#1a72d4;--adim:#deeaf8;--accent-text:#1a72d4;--red:#c0392b;--rdim:#fce8e6;--green:#1a8a4a;--gdim:#e0f5e9;--green-text:#1a8a4a;--amber:#d97706;--purple:#7c3aed;--pdim:rgba(124,58,237,.1);--card-shadow:0 2px 12px rgba(0,0,0,.12);}
+body{background:var(--bg0);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;transition:background .3s;}
+#app{display:flex;flex-direction:column;height:90vh;min-height:700px;width:100%;max-width:1400px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg0);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text1);box-shadow:var(--card-shadow);transition:background .3s,border-color .3s;}
+#hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;gap:8px;}
+.hdr-l{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.hdr-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+.tabs{display:flex;gap:2px;background:var(--bg0);padding:3px;border-radius:7px;border:1px solid var(--border);}
+.tab{padding:5px 12px;border-radius:5px;font-size:12px;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:all .15s;font-weight:500;}
+.tab.active{background:var(--bg2);color:var(--text1);box-shadow:0 1px 3px rgba(0,0,0,.15);}
+.hdr-actions{display:flex;gap:5px;align-items:center;}
+.hdr-btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--text1);transition:all .15s;white-space:nowrap;font-weight:500;}
+.hdr-btn:hover{background:var(--bg3);}
+.hdr-btn.save{border-color:var(--green);color:var(--green-text);background:var(--gdim);}
+.hdr-btn.load{border-color:var(--accent);color:var(--accent-text);background:var(--adim);}
+.hdr-btn.ai{border-color:#a855f7;color:var(--purple);background:var(--pdim);}
+.hdr-btn.rpt{border-color:var(--amber);color:var(--amber);background:rgba(255,179,71,.1);}
+.ico-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:8px;font-size:16px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);}
+.stats{display:flex;gap:18px;flex-wrap:wrap;}
+.stat{text-align:right;}
+.sl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;}
+.sv{font-weight:700;font-size:14px;}
+#main{display:flex;flex:1;min-height:0;overflow:hidden;}
+.sb{width:242px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--border);overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:13px;}
+.sb::-webkit-scrollbar{width:4px;}.sb::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.sec{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--border);font-weight:600;}
+.fl{font-size:11px;color:var(--text2);margin-bottom:3px;font-weight:500;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-bottom:5px;}
+.g2{display:grid;grid-template-columns:2fr 1fr;gap:3px;}
+.f{margin-bottom:6px;}
+input[type=number],input[type=text],select{font-size:12px;padding:5px 7px;width:100%;background:var(--bg0);border:1px solid var(--border);border-radius:5px;color:var(--text1);outline:none;transition:border-color .15s;}
+input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--accent);}
+select option{background:var(--bg1);}
+button{font-size:12px;padding:7px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--text1);transition:all .15s;width:100%;font-weight:500;}
+button:hover{background:var(--bg3);}
+.bp{background:var(--adim);border-color:var(--accent);color:var(--accent-text);font-weight:700;margin-bottom:5px;}
+.bp:hover{filter:brightness(1.1);}
+.bd{color:var(--text2);}
+.ds-toggle{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;border-radius:7px;border:1px solid var(--border);background:var(--bg0);cursor:pointer;transition:all .2s;user-select:none;}
+.ds-toggle.on{border-color:var(--green);background:var(--gdim);}
+.ds-toggle-label{font-size:11px;font-weight:600;}
+.ds-toggle.on .ds-toggle-label{color:var(--green-text);}
+.ds-toggle.off .ds-toggle-label{color:var(--text2);}
+.ds-pill{width:36px;height:20px;border-radius:10px;background:var(--border2);position:relative;transition:background .2s;flex-shrink:0;}
+.ds-toggle.on .ds-pill{background:var(--green);}
+.ds-pill::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.ds-toggle.on .ds-pill::after{transform:translateX(16px);}
+.ds-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;}
+.ds-toggle.on .ds-badge{background:var(--green);color:#fff;}
+.ds-toggle.off .ds-badge{background:var(--border2);color:var(--text2);}
+
+/* ── ITEM ROWS ── */
+.ci{display:flex;align-items:flex-start;gap:5px;padding:7px 0;border-bottom:1px solid var(--border);}
+.csw{width:10px;height:10px;border-radius:3px;flex-shrink:0;margin-top:3px;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer;}
+.ci-info{flex:1;min-width:0;}
+.cn{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cd{font-size:10px;color:var(--text2);margin-top:1px;}
+.ci-tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:3px;}
+.cb{font-size:10px;color:var(--accent-text);background:var(--adim);padding:2px 6px;border-radius:4px;font-weight:600;}
+.fragile-badge{font-size:10px;color:var(--amber);background:rgba(255,179,71,.12);padding:2px 6px;border-radius:4px;font-weight:700;border:1px solid rgba(255,179,71,.3);}
+.ci-actions{display:flex;gap:2px;flex-shrink:0;margin-top:1px;}
+.ci-btn{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;border:none;background:transparent;font-size:12px;padding:0;}
+.ci-btn.edit{color:var(--accent-text);}
+.ci-btn.edit:hover{background:var(--adim);}
+.ci-btn.dup{color:var(--green-text);}
+.ci-btn.dup:hover{background:var(--gdim);}
+.ci-btn.del{color:var(--red);}
+.ci-btn.del:hover{background:var(--rdim);}
+
+.cbmf-row{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;}
+.cbmf-label{color:var(--text2);}
+.cbmf-val{font-weight:600;}
+.psum{background:var(--bg0);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:5px;}
+.psum-row{display:flex;justify-content:space-between;font-size:11px;padding:1px 0;}
+.heat-bar{height:6px;border-radius:3px;background:linear-gradient(to right,#1D9E75,#f59e0b,#E24B4A);margin-top:4px;}
+.heat-labels{display:flex;justify-content:space-between;margin-top:3px;font-size:10px;color:var(--text2);}
+.emptylist{font-size:11px;color:var(--text3);text-align:center;padding:14px 0;}
+
+/* ── 3D VIEWPORT ── */
+#vp{flex:1;position:relative;overflow:hidden;}
+#cv{display:block;}
+#hint{position:absolute;bottom:12px;right:12px;font-size:10px;color:var(--text3);line-height:2;background:color-mix(in srgb,var(--bg0) 88%,transparent);padding:6px 11px;border-radius:6px;pointer-events:none;border:1px solid var(--border);backdrop-filter:blur(4px);}
+#msg{position:absolute;top:12px;right:12px;font-size:12px;background:color-mix(in srgb,var(--bg1) 95%,transparent);border-left:3px solid var(--accent);padding:8px 13px;border-radius:6px;display:none;color:var(--text1);max-width:240px;line-height:1.5;box-shadow:var(--card-shadow);backdrop-filter:blur(4px);}
+#msg.success{border-left-color:var(--green);}
+#msg.err{border-left-color:var(--red);}
+#stale-banner{position:absolute;top:12px;left:12px;background:rgba(255,179,71,.15);border:1px solid var(--amber);color:var(--amber);padding:7px 13px;border-radius:7px;font-size:11px;font-weight:600;display:none;align-items:center;gap:8px;backdrop-filter:blur(4px);}
+#stale-banner button{width:auto;padding:3px 10px;font-size:11px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;}
+#empty{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
+.empty-icon{font-size:52px;margin-bottom:10px;opacity:.18;}
+.empty-txt{font-size:13px;color:var(--text3);font-weight:500;}
+#pnav{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:8px;background:color-mix(in srgb,var(--bg1) 92%,transparent);border:1px solid var(--border);padding:5px 10px;border-radius:8px;backdrop-filter:blur(4px);box-shadow:var(--card-shadow);}
+#pnav button{width:auto;padding:3px 12px;font-size:14px;font-weight:700;}
+#pnav span{font-size:12px;min-width:110px;text-align:center;font-weight:600;}
+#pcard{position:absolute;bottom:50px;right:12px;background:color-mix(in srgb,var(--bg1) 92%,transparent);border:1px solid var(--border);border-left:3px solid var(--accent);padding:10px 13px;border-radius:7px;display:none;font-size:12px;line-height:2;min-width:155px;box-shadow:var(--card-shadow);backdrop-filter:blur(4px);}
+
+/* ── MODALS ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal-card{background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:26px;width:440px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.6);position:relative;}
+.modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text2);}
+.modal-close:hover{background:var(--bg3);}
+.modal-heading{font-size:16px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:12px;color:var(--text2);margin-bottom:18px;line-height:1.6;}
+.modal-btns{display:flex;gap:8px;margin-top:16px;}
+.modal-btns button{flex:1;}
+.modal-primary{background:var(--adim);border-color:var(--accent);color:var(--accent-text);font-weight:700;}
+.modal-primary:hover{filter:brightness(1.1);}
+.fragile-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:7px;background:var(--bg0);cursor:pointer;user-select:none;margin-bottom:6px;}
+.fragile-row input[type=checkbox]{width:auto;accent-color:var(--amber);cursor:pointer;}
+.fragile-row-label{font-size:12px;font-weight:500;}
+.fragile-row-sub{font-size:11px;color:var(--text2);margin-top:1px;}
+.color-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;}
+.color-dot:hover{transform:scale(1.15);}
+.color-dot.selected{border-color:var(--text1);transform:scale(1.15);}
+
+/* ── AI MODAL ── */
+.ai-step{display:none;}
+.ai-step.active{display:block;}
+.ai-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;background:var(--pdim);color:var(--purple);border:1px solid rgba(168,85,247,.3);margin-bottom:14px;font-weight:600;}
+.ai-dropzone{border:2px dashed var(--border2);border-radius:10px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px;}
+.ai-dropzone:hover,.ai-dropzone.hover{border-color:#a855f7;background:var(--pdim);}
+.ai-dropzone-icon{font-size:36px;margin-bottom:8px;}
+.ai-dropzone-txt{font-size:13px;color:var(--text2);margin-bottom:4px;}
+.ai-dropzone-hint{font-size:11px;color:var(--text3);}
+.ai-img-preview{width:100%;border-radius:8px;margin-bottom:14px;border:1px solid var(--border);max-height:200px;object-fit:contain;background:var(--bg0);}
+.spinner{width:44px;height:44px;border:3px solid var(--border2);border-top-color:#a855f7;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ai-result-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
+.ai-result-table th{text-align:left;color:var(--text2);font-weight:600;padding:5px 6px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.5px;}
+.ai-result-table td{padding:6px 6px;border-bottom:1px solid var(--border);}
+.ai-result-table td input{padding:3px 5px;font-size:12px;border-radius:4px;}
+.ai-result-table tr:last-child td{border-bottom:none;}
+.ai-key-note{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;}
+.ai-link{font-size:11px;color:var(--accent-text);text-decoration:none;}
+.ai-link:hover{text-decoration:underline;}
+.fix-box{background:var(--bg0);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px;}
+.fix-box-title{font-size:12px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.fix-step{font-size:12px;color:var(--text2);padding:5px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;line-height:1.5;}
+.fix-step:last-child{border-bottom:none;}
+.fix-step-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.fix-code{font-family:monospace;font-size:11px;background:var(--bg2);border:1px solid var(--border);padding:6px 10px;border-radius:5px;margin-top:6px;display:block;color:var(--accent-text);cursor:pointer;position:relative;}
+.fix-code:hover::after{content:'Click to copy';position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:sans-serif;font-size:10px;color:var(--text3);}
+.os-tabs{display:flex;gap:4px;margin-bottom:10px;}
+.os-tab{padding:4px 10px;font-size:11px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);font-weight:500;width:auto;}
+.os-tab.active{background:var(--adim);border-color:var(--accent);color:var(--accent-text);}
+.os-section{display:none;}
+.os-section.active{display:block;}
+
+/* ── DRAG OVERLAY ── */
+#drop-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+#drop-overlay.active{display:flex;}
+.drop-ring{width:180px;height:180px;border-radius:50%;border:3px dashed #a855f7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{border-color:#a855f7;box-shadow:0 0 0 0 rgba(168,85,247,.4);}50%{border-color:#c084fc;box-shadow:0 0 0 12px rgba(168,85,247,0);}}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="hdr">
+  <div class="hdr-l">
+   <div class="hdr-title"><div class="dot"></div>Cargo planner</div>
+   <div class="tabs">
+    <button class="tab active" onclick="switchTab('vehicle')">Vehicle loading</button>
+    <button class="tab" onclick="switchTab('pallet')">Pallet stacker</button>
+   </div>
+   <div class="hdr-actions">
+    <button class="hdr-btn ai" onclick="openAiModal()">
+     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+     AI Import (WIP)
+    </button>
+    <button class="hdr-btn rpt" onclick="exportReport()">
+     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+     Export
+    </button>
+    <button class="hdr-btn save" onclick="saveLoad()">
+     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+     Save
+    </button>
+    <button class="hdr-btn load" onclick="openLoad()">
+     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><polyline points="9 14 12 11 15 14"/></svg>
+     Open
+    </button>
+    <button class="ico-btn" id="mode-btn" onclick="toggleMode()" title="Toggle light/dark">&#9790;</button>
+    <input type="file" id="file-input" accept=".json" style="display:none" onchange="loadFromFile(event)">
+    <input type="file" id="img-input" accept="image/*" style="display:none" onchange="handleImgFile(event)">
+   </div>
+  </div>
+  <div class="stats">
+   <div class="stat"><div class="sl">Volume used</div><div class="sv" id="s-vol">0%</div></div>
+   <div class="stat"><div class="sl">Total weight</div><div class="sv" id="s-wt">0 kg</div></div>
+   <div class="stat"><div class="sl">Items placed</div><div class="sv" id="s-items">0 / 0</div></div>
+   <div class="stat"><div class="sl">Total CBM</div><div class="sv" id="s-cbm">0.000 m&#179;</div></div>
+  </div>
+ </div>
+
+ <div id="main">
+  <!-- VEHICLE SIDEBAR -->
+  <div class="sb" id="vsb">
+   <div>
+    <div class="sec">Vehicle / container</div>
+    <div class="f"><div class="fl">Preset</div>
+     <select id="vp2" style="margin-bottom:5px">
+      <option value="">Custom</option>
+      <option value="360,120,160">3 Pallet Van</option>
+      <option value="480,240,220">6 Pallet Truck</option>
+      <option value="600,240,230">10 Pallet Truck</option>
+      <option value="720,240,240">12 Pallet Truck</option>
+      <option value="860,240,290">14 Pallet Truck</option>
+      <option value="1320,240,300" selected>Semi Truck</option>
+      <option value="590,235,239">20ft container</option>
+      <option value="1203,235,239">40ft container</option>
+     </select>
+    </div>
+    <div class="g3">
+     <div><div class="fl">L (cm)</div><input type="number" id="vl" value="1360" min="1"></div>
+     <div><div class="fl">W (cm)</div><input type="number" id="vw" value="240" min="1"></div>
+     <div><div class="fl">H (cm)</div><input type="number" id="vh" value="270" min="1"></div>
+    </div>
+    <div class="f"><div class="fl">Max load (kg)</div><input type="number" id="vmw" value="22000" min="1"></div>
+    <button onclick="applyV()" style="margin-bottom:9px">Apply vehicle</button>
+    <div class="fl" style="margin-bottom:5px">Stacking mode</div>
+    <div class="ds-toggle on" id="ds-btn" onclick="toggleDoubleStack()">
+     <div>
+      <div class="ds-toggle-label">Double stack</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:1px" id="ds-sub">Items can stack on top</div>
+     </div>
+     <div style="display:flex;align-items:center;gap:7px">
+      <span class="ds-badge" id="ds-badge">ON</span>
+      <div class="ds-pill"></div>
+     </div>
+    </div>
+   </div>
+   <div>
+    <div class="sec">Add cargo</div>
+    <div class="f"><div class="fl">Name</div><input type="text" id="vcn" placeholder="e.g. Pallet, crate..."></div>
+    <div class="g3">
+     <div><div class="fl">L (cm)</div><input type="number" id="vcl" value="120" min="1"></div>
+     <div><div class="fl">W (cm)</div><input type="number" id="vcw" value="80" min="1"></div>
+     <div><div class="fl">H (cm)</div><input type="number" id="vch" value="100" min="1"></div>
+    </div>
+    <div class="g2">
+     <div><div class="fl">Weight (kg)</div><input type="number" id="vcwt" value="200" min="0"></div>
+     <div><div class="fl">Qty</div><input type="number" id="vcq" value="1" min="1"></div>
+    </div>
+    <button onclick="vAddC()">+ Add cargo</button>
+   </div>
+   <div style="flex:1">
+    <div class="sec">Cargo list</div>
+    <div id="vclist"><div class="emptylist">No cargo added yet</div></div>
+    <div id="vcbmf" style="display:none;margin-top:8px;padding-top:7px;border-top:1px solid var(--border)">
+     <div class="cbmf-row"><span class="cbmf-label">Total cargo CBM</span><span class="cbmf-val" id="vlist-cbm">0.000 m&#179;</span></div>
+     <div class="cbmf-row"><span class="cbmf-label">Vehicle capacity</span><span class="cbmf-val" id="vveh-cbm">0.000 m&#179;</span></div>
+    </div>
+   </div>
+   <div>
+    <button class="bp" onclick="vDoStack()">Auto stack</button>
+    <button class="bd" onclick="vClearAll()">Clear all</button>
+    <div style="margin-top:10px"><div class="fl">Weight distribution</div><div class="heat-bar"></div><div class="heat-labels"><span>Light</span><span>Heavy</span></div></div>
+   </div>
+  </div>
+
+  <!-- PALLET SIDEBAR -->
+  <div class="sb" id="psb" style="display:none">
+   <div>
+    <div class="sec">Pallet configuration</div>
+    <div class="f"><div class="fl">Preset</div>
+     <select id="pp" style="margin-bottom:5px" onchange="applyPalletPreset()">
+      <option value="120,80,220,1500">Euro EPAL (120&#215;80cm)</option>
+      <option value="120,100,220,1500">Euro 2 EPAL (120&#215;100cm)</option>
+      <option value="116.5,116.5,220,1500">CHEP / AU Standard (116&#215;116cm)</option>
+      <option value="121.9,101.6,220,1360">US Standard 48&#215;40 (122&#215;102cm)</option>
+      <option value="60,80,150,750">Half Euro (60&#215;80cm)</option>
+      <option value="60,40,100,250">Quarter pallet (60&#215;40cm)</option>
+      <option value="">Custom</option>
+     </select>
+    </div>
+    <div class="g3">
+     <div><div class="fl">L (cm)</div><input type="number" id="pl" value="120" min="1"></div>
+     <div><div class="fl">W (cm)</div><input type="number" id="pw" value="80" min="1"></div>
+     <div><div class="fl">Stack H (cm)</div><input type="number" id="pmh" value="220" min="1"></div>
+    </div>
+    <div class="f"><div class="fl">Max weight / pallet (kg)</div><input type="number" id="pmw" value="1500" min="1"></div>
+    <button onclick="applyPallet()">Apply pallet</button>
+   </div>
+   <div>F
+    <div class="sec">Add item</div>
+    <div class="f"><div class="fl">Name</div><input type="text" id="pcn" placeholder="e.g. Box, carton..."></div>
+    <div class="g3">
+     <div><div class="fl">L (cm)</div><input type="number" id="pcl" value="40" min="1"></div>
+     <div><div class="fl">W (cm)</div><input type="number" id="pcw" value="30" min="1"></div>
+     <div><div class="fl">H (cm)</div><input type="number" id="pch" value="25" min="1"></div>
+    </div>
+    <div class="g2">
+     <div><div class="fl">Weight (kg)</div><input type="number" id="pcwt" value="10" min="0"></div>
+     <div><div class="fl">Qty</div><input type="number" id="pcq" value="6" min="1"></div>
+    </div>
+    <button onclick="pAddC()">+ Add item</button>
+   </div>
+   <div style="flex:1">
+    <div class="sec">Item list</div>
+    <div id="pclist"><div class="emptylist">No items added yet</div></div>
+    <div id="pcbmf" style="display:none;margin-top:8px;padding-top:7px;border-top:1px solid var(--border)">
+     <div class="cbmf-row"><span class="cbmf-label">Total items CBM</span><span class="cbmf-val" id="plist-cbm">0.000 m&#179;</span></div>
+     <div class="cbmf-row"><span class="cbmf-label">Pallet capacity</span><span class="cbmf-val" id="ppallet-cbm">0.000 m&#179;</span></div>
+    </div>
+    <div id="psum-box" style="display:none;margin-top:10px">
+     <div class="sec">Pallet summary</div>
+     <div id="psum-content"></div>
+    </div>
+   </div>
+   <div style="flex-shrink:0">
+    <button class="bp" onclick="pDoStack()">Stack pallets</button>
+    <button class="bd" onclick="pClearAll()">Clear all</button>
+   </div>
+  </div>
+
+  <!-- 3D VIEWPORT -->
+  <div id="vp">
+   <canvas id="cv"></canvas>
+   <div id="hint">Drag &#8212; rotate &nbsp;|&nbsp; Scroll &#8212; zoom &nbsp;|&nbsp; Right drag &#8212; pan</div>
+   <div id="msg"></div>
+   <div id="stale-banner">
+    &#9888; Items changed
+    <button onclick="activeTab==='vehicle'?vDoStack():pDoStack()">Re-stack now</button>
+   </div>
+   <div id="empty"><div class="empty-icon">&#9635;</div><div class="empty-txt" id="empty-txt">Add cargo and click Auto stack</div></div>
+   <div id="pnav"><button onclick="prevP()">&#8249;</button><span id="pnav-label">Pallet 1 of 1</span><button onclick="nextP()">&#8250;</button></div>
+   <div id="pcard"><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-weight:700">Current pallet</div><div id="pcard-body"></div></div>
+  </div>
+ </div>
+</div>
+
+<!-- ── EDIT MODAL ── -->
+<div class="modal-overlay" id="edit-modal">
+ <div class="modal-card">
+  <button class="modal-close" onclick="closeEditModal()">&#215;</button>
+  <div class="modal-heading">Edit item</div>
+  <div class="modal-sub">Changes will require a re-stack to update the 3D view.</div>
+  <input type="hidden" id="edit-id">
+  <input type="hidden" id="edit-tab">
+  <div class="f"><div class="fl">Name</div><input type="text" id="edit-name"></div>
+  <div class="f">
+   <div class="fl">Colour</div>
+   <div class="color-row" id="edit-color-row"></div>
+  </div>
+  <div class="g3">
+   <div><div class="fl">L (cm)</div><input type="number" id="edit-l" min="1"></div>
+   <div><div class="fl">W (cm)</div><input type="number" id="edit-w" min="1"></div>
+   <div><div class="fl">H (cm)</div><input type="number" id="edit-h" min="1"></div>
+  </div>
+  <div class="g2" style="margin-bottom:12px">
+   <div><div class="fl">Weight (kg)</div><input type="number" id="edit-weight" min="0"></div>
+   <div><div class="fl">Qty</div><input type="number" id="edit-qty" min="1"></div>
+  </div>
+  <label class="fragile-row" id="fragile-row" onclick="toggleFragileCheck()">
+   <input type="checkbox" id="edit-fragile" onclick="event.stopPropagation()">
+   <div>
+    <div class="fragile-row-label">&#9888; Fragile — nothing can be stacked on top</div>
+    <div class="fragile-row-sub">The item will be treated as a top-layer only item</div>
+   </div>
+  </label>
+  <div class="modal-btns">
+   <button class="modal-primary" onclick="saveEdit()">Save changes</button>
+   <button onclick="closeEditModal()">Cancel</button>
+  </div>
+ </div>
+</div>
+
+<!-- ── AI MODAL ── -->
+<div class="modal-overlay" id="ai-modal">
+ <div class="modal-card">
+  <button class="modal-close" onclick="closeAiModal()">&#215;</button>
+  <!-- Step: file:// protocol warning -->
+  <div class="ai-step" id="ai-step-fileprotocol">
+   <div style="font-size:32px;text-align:center;margin-bottom:12px">&#128683;</div>
+   <div class="modal-heading" style="text-align:center">File opened incorrectly</div>
+   <div class="modal-sub" style="text-align:center;margin-bottom:16px">The AI import requires the file to be served through a local web server. You've opened it by double-clicking, which uses the <code style="font-family:monospace;background:var(--bg2);padding:1px 5px;border-radius:3px;font-size:11px">file://</code> protocol — browsers block API calls from there for security reasons.</div>
+   <div class="fix-box">
+    <div class="fix-box-title">&#9889; Fix it in 60 seconds</div>
+    <div class="os-tabs">
+     <button class="os-tab active" onclick="switchOs('win')">Windows</button>
+     <button class="os-tab" onclick="switchOs('mac')">Mac</button>
+     <button class="os-tab" onclick="switchOs('node')">Node.js</button>
+    </div>
+    <div class="os-section active" id="os-win">
+     <div class="fix-step"><div class="fix-step-num">1</div><div>Open the folder where <b>cargo-planner.html</b> is saved. Click the address bar at the top, type <b>cmd</b>, press Enter.</div></div>
+     <div class="fix-step"><div class="fix-step-num">2</div><div>In the black window that opens, paste this command and press Enter:<code class="fix-code" onclick="copyCmd('python -m http.server 8080')">python -m http.server 8080</code>If you get an error, try: <code class="fix-code" onclick="copyCmd('python3 -m http.server 8080')">python3 -m http.server 8080</code></div></div>
+     <div class="fix-step"><div class="fix-step-num">3</div><div>Open your browser and go to: <code class="fix-code" onclick="copyCmd('http://localhost:8080/cargo-planner.html')">http://localhost:8080/cargo-planner.html</code></div></div>
+    </div>
+    <div class="os-section" id="os-mac">
+     <div class="fix-step"><div class="fix-step-num">1</div><div>Open <b>Terminal</b> (search Spotlight with ⌘Space, type Terminal).</div></div>
+     <div class="fix-step"><div class="fix-step-num">2</div><div>Navigate to the folder with the file. If it's in Downloads:<code class="fix-code" onclick="copyCmd('cd ~/Downloads && python3 -m http.server 8080')">cd ~/Downloads && python3 -m http.server 8080</code></div></div>
+     <div class="fix-step"><div class="fix-step-num">3</div><div>Open your browser and go to:<code class="fix-code" onclick="copyCmd('http://localhost:8080/cargo-planner.html')">http://localhost:8080/cargo-planner.html</code></div></div>
+    </div>
+    <div class="os-section" id="os-node">
+     <div class="fix-step"><div class="fix-step-num">1</div><div>Open a terminal in the file's folder.</div></div>
+     <div class="fix-step"><div class="fix-step-num">2</div><div>Run:<code class="fix-code" onclick="copyCmd('npx serve .')">npx serve .</code></div></div>
+     <div class="fix-step"><div class="fix-step-num">3</div><div>Visit the URL shown in the terminal (usually <b>http://localhost:3000</b>).</div></div>
+    </div>
+   </div>
+   <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">All other features (vehicle loading, pallet stacking, save/load) work fine without a server. Only the AI import needs one.</div>
+   <button onclick="closeAiModal()" style="margin-top:14px">Close</button>
+  </div>
+
+  <div class="ai-step" id="ai-step-key">
+   <div class="ai-tag">&#10024; AI-powered</div>
+   <div class="modal-heading">Connect your API key</div>
+   <div class="modal-sub">Cargo Planner uses Claude AI to read screenshots. Your key is stored in your browser session only, sent directly to Anthropic.</div>
+   <div class="f"><div class="fl">Anthropic API key</div><input type="password" id="api-key-input" placeholder="sk-ant-..." style="font-family:monospace" oninput="checkKeyInput()"></div>
+   <button id="key-continue-btn" class="modal-primary" onclick="saveKeyAndContinue()" disabled>Continue &#8594;</button>
+   <div class="ai-key-note">No key? <a href="https://console.anthropic.com/keys" target="_blank" class="ai-link">Get one at console.anthropic.com &#8599;</a> — each image costs less than 1 cent.</div>
+  </div>
+  <div class="ai-step" id="ai-step-upload">
+   <div class="ai-tag">&#10024; AI-powered</div>
+   <div class="modal-heading">Import from screenshot</div>
+   <div class="modal-sub">Drop a <b>freight quote</b>, <b>packing list</b>, <b>delivery docket</b>, or any shipping document. Claude reads the dimensions and quantities automatically.</div>
+   <div class="ai-dropzone" id="ai-dropzone" onclick="document.getElementById('img-input').click()">
+    <div class="ai-dropzone-icon">&#128247;</div>
+    <div class="ai-dropzone-txt">Click to browse or drop image here</div>
+    <div class="ai-dropzone-hint">PNG, JPG, WEBP &middot; Screenshots, labels, scanned documents</div>
+   </div>
+   <div style="display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:11px;color:var(--text3)">Adding to: <b style="color:var(--text1)" id="ai-target-label">Vehicle loading</b></span>
+    <button onclick="clearApiKey()" style="width:auto;padding:4px 10px;font-size:11px;color:var(--text2)">Change key</button>
+   </div>
+  </div>
+  <div class="ai-step" id="ai-step-processing">
+   <img id="ai-preview-img" class="ai-img-preview" src="" alt="">
+   <div class="spinner"></div>
+   <div style="text-align:center;font-size:14px;font-weight:600;margin-bottom:6px">Analysing image&#8230;</div>
+   <div style="text-align:center;font-size:12px;color:var(--text2)">Claude is reading dimensions, weights and item names</div>
+  </div>
+  <div class="ai-step" id="ai-step-results">
+   <img id="ai-result-img" class="ai-img-preview" src="" alt="">
+   <div class="modal-heading" id="ai-result-heading">Found cargo items</div>
+   <div class="modal-sub" id="ai-result-sub">Review and adjust quantities. Dimensions in cm, weight in kg.</div>
+   <div id="ai-result-body"></div>
+   <div class="modal-btns">
+    <button class="modal-primary" id="ai-import-btn" onclick="confirmAiImport()">&#43; Add &amp; Auto Stack</button>
+    <button onclick="showAiStep('ai-step-upload')">Try another</button>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- ── DRAG OVERLAY ── -->
+<div id="drop-overlay">
+ <div class="drop-ring">
+  <div style="font-size:52px">&#128247;</div>
+  <div style="font-size:13px;font-weight:600;color:#c084fc">Drop to analyse</div>
+ </div>
+ <div style="margin-top:18px;font-size:13px;color:rgba(255,255,255,.5)">Claude AI will extract cargo details from your screenshot</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
+const PAL=['#3b82f6','#22c55e','#f97316','#a855f7','#eab308','#06b6d4','#ef4444','#14b8a6','#f43f5e','#84cc16'];
+let vci=0,pci=0;
+const vnc=()=>PAL[vci++%PAL.length];
+const pnc=()=>PAL[pci++%PAL.length];
+const cbm=(l,w,h)=>l*w*h/1000000;
+const PALLET_H=14;
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let activeTab='vehicle';
+let darkMode=true;
+let stackIsStale=false;
+let veh={l:1360,w:240,h:270,mw:24000};
+let vCList=[],vPlaced=[],vDoubleStack=true;
+let palCfg={l:120,w:80,maxH:220,mw:1500};
+let pCList=[],palResults=[],curPal=0;
+
+// Scene themes
+const DARK={bg:0x0d1520,floor:0x111a2a,g1:0x1e2d42,g2:0x131f30,wire:0x5ba8ff,palBase:0x7a5c1e,palEdge:0x4a3810,sWire:0x4a9eff,ambI:.65,d1I:.85,d2I:.4,d2c:0x6688bb};
+const LIGHT={bg:0xdce3ee,floor:0xb8c6d8,g1:0x9aabb8,g2:0xa8b8c8,wire:0x1a72d4,palBase:0x9a6e22,palEdge:0x6a4a10,sWire:0x1a72d4,ambI:.85,d1I:1.1,d2I:.35,d2c:0x889aaa};
+const SC=()=>darkMode?DARK:LIGHT;
+
+// ── THREE.JS ──────────────────────────────────────────────────────────────────
+const vpEl=document.getElementById('vp'),cvEl=document.getElementById('cv');
+const scene=new THREE.Scene();
+const renderer=new THREE.WebGLRenderer({canvas:cvEl,antialias:true});
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const cam=new THREE.PerspectiveCamera(45,1,.01,10000);
+const ambLight=new THREE.AmbientLight(0xffffff,.65);scene.add(ambLight);
+const dirLight=new THREE.DirectionalLight(0xffffff,.85);dirLight.position.set(8,16,8);dirLight.castShadow=true;dirLight.shadow.mapSize.width=2048;dirLight.shadow.mapSize.height=2048;scene.add(dirLight);
+const dirLight2=new THREE.DirectionalLight(0x6688bb,.4);dirLight2.position.set(-8,5,-10);scene.add(dirLight2);
+const fillLight=new THREE.DirectionalLight(0xffffff,.2);fillLight.position.set(0,-5,10);scene.add(fillLight);
+const cGrp=new THREE.Group(),iGrp=new THREE.Group(),wGrp=new THREE.Group();
+scene.add(cGrp);scene.add(iGrp);scene.add(wGrp);
+scene.background=new THREE.Color(DARK.bg);
+
+const orb={r:15,phi:1.05,th:-.55,tx:0,ty:0,tz:0,drag:false,pan:false,lx:0,ly:0};
+function camUp(){cam.position.set(orb.tx+orb.r*Math.sin(orb.phi)*Math.sin(orb.th),orb.ty+orb.r*Math.cos(orb.phi),orb.tz+orb.r*Math.sin(orb.phi)*Math.cos(orb.th));cam.lookAt(orb.tx,orb.ty,orb.tz);}
+cvEl.addEventListener('mousedown',e=>{if(e.button===0)orb.drag=true;if(e.button===2)orb.pan=true;orb.lx=e.clientX;orb.ly=e.clientY;e.preventDefault();});
+cvEl.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('mouseup',()=>{orb.drag=false;orb.pan=false;});
+window.addEventListener('mousemove',e=>{const dx=e.clientX-orb.lx,dy=e.clientY-orb.ly;orb.lx=e.clientX;orb.ly=e.clientY;if(orb.drag){orb.th-=dx*.008;orb.phi=Math.max(.05,Math.min(Math.PI-.05,orb.phi+dy*.008));}if(orb.pan){const rv=new THREE.Vector3();rv.crossVectors(cam.getWorldDirection(new THREE.Vector3()),new THREE.Vector3(0,1,0)).normalize();const ps=orb.r*.001;orb.tx-=rv.x*dx*ps;orb.tz-=rv.z*dx*ps;orb.ty+=dy*ps;}});
+cvEl.addEventListener('wheel',e=>{orb.r=Math.max(.3,Math.min(600,orb.r*(1+e.deltaY*.001)));e.preventDefault();},{passive:false});
+function resize(){const w=vpEl.clientWidth,h=vpEl.clientHeight;if(w>0&&h>0){renderer.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix();}}
+new ResizeObserver(resize).observe(vpEl);
+function loop(){requestAnimationFrame(loop);camUp();renderer.render(scene,cam);}
+loop();
+function clrGrp(g){while(g.children.length)g.remove(g.children[0]);}
+function applySceneTheme(){const s=SC();scene.background=new THREE.Color(s.bg);ambLight.intensity=s.ambI;dirLight.intensity=s.d1I;dirLight2.intensity=s.d2I;dirLight2.color.set(s.d2c);fillLight.intensity=darkMode?.15:.3;}
+function toggleMode(){darkMode=!darkMode;document.body.classList.toggle('light',!darkMode);document.getElementById('mode-btn').textContent=darkMode?'☀':'☾';applySceneTheme();clrGrp(cGrp);clrGrp(iGrp);clrGrp(wGrp);if(activeTab==='vehicle'){buildVCont();buildVItems();}else buildPalletScene();}
+
+// ── STALE BANNER ──────────────────────────────────────────────────────────────
+function markStale(){stackIsStale=true;document.getElementById('stale-banner').style.display='flex';}
+function markFresh(){stackIsStale=false;document.getElementById('stale-banner').style.display='none';}
+
+// ── MESH BUILDER ──────────────────────────────────────────────────────────────
+function addItemMeshes(items,yOff){
+ for(const it of items){
+  const il=it.l/100,iw=it.w/100,ih=it.h/100,px=it.px/100,py=it.py/100+(yOff||0),pz=it.pz/100;
+  const geo=new THREE.BoxGeometry(il,ih,iw);
+  const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:new THREE.Color(it.color),roughness:.45,metalness:.05}));
+  mesh.position.set(px+il/2,py+ih/2,pz+iw/2);mesh.castShadow=true;mesh.receiveShadow=true;iGrp.add(mesh);
+  const eCol=darkMode?new THREE.Color(1,1,1):new THREE.Color(0,0,0);
+  const em=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(il*.998,ih*.998,iw*.998)),new THREE.LineBasicMaterial({color:eCol,transparent:true,opacity:darkMode?.5:.4}));
+  em.position.copy(mesh.position);iGrp.add(em);
+ }
+}
+
+// ── EDIT MODAL ────────────────────────────────────────────────────────────────
+let editColor='';
+function editItem(id,tab){
+ const list=tab==='vehicle'?vCList:pCList;
+ const it=list.find(c=>c.id===id);if(!it)return;
+ document.getElementById('edit-id').value=id;
+ document.getElementById('edit-tab').value=tab;
+ document.getElementById('edit-name').value=it.name;
+ document.getElementById('edit-l').value=it.l;
+ document.getElementById('edit-w').value=it.w;
+ document.getElementById('edit-h').value=it.h;
+ document.getElementById('edit-weight').value=it.weight;
+ document.getElementById('edit-qty').value=it.qty;
+ document.getElementById('edit-fragile').checked=!!it.fragile;
+ editColor=it.color;
+ // Build colour picker
+ const row=document.getElementById('edit-color-row');
+ row.innerHTML=PAL.map(c=>`<div class="color-dot${c===editColor?' selected':''}" style="background:${c}" onclick="selectEditColor('${c}')"></div>`).join('');
+ document.getElementById('edit-modal').classList.add('open');
+}
+function selectEditColor(c){editColor=c;document.querySelectorAll('.color-dot').forEach(d=>{d.classList.toggle('selected',d.style.background===c);});}
+function toggleFragileCheck(){const cb=document.getElementById('edit-fragile');cb.checked=!cb.checked;}
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('open');}
+function saveEdit(){
+ const id=document.getElementById('edit-id').value;
+ const tab=document.getElementById('edit-tab').value;
+ const list=tab==='vehicle'?vCList:pCList;
+ const idx=list.findIndex(c=>c.id===id);if(idx===-1)return;
+ list[idx]={...list[idx],
+  name:document.getElementById('edit-name').value.trim()||list[idx].name,
+  l:+document.getElementById('edit-l').value||1,
+  w:+document.getElementById('edit-w').value||1,
+  h:+document.getElementById('edit-h').value||1,
+  weight:+document.getElementById('edit-weight').value||0,
+  qty:+document.getElementById('edit-qty').value||1,
+  fragile:document.getElementById('edit-fragile').checked,
+  color:editColor
+ };
+ closeEditModal();
+ if(tab==='vehicle'){vRenderList();markStale();}
+ else{pRenderList();markStale();}
+}
+
+// ── DUPLICATE ITEM ────────────────────────────────────────────────────────────
+function dupItem(id,tab){
+ const list=tab==='vehicle'?vCList:pCList;
+ const it=list.find(c=>c.id===id);if(!it)return;
+ const copy={...it,id:Date.now().toString(),color:tab==='vehicle'?vnc():pnc()};
+ const idx=list.indexOf(it);list.splice(idx+1,0,copy);
+ if(tab==='vehicle'){vRenderList();markStale();}
+ else{pRenderList();markStale();}
+}
+
+// ── VEHICLE SCENE ─────────────────────────────────────────────────────────────
+function buildVCont(){
+ clrGrp(cGrp);clrGrp(wGrp);
+ const s=SC(),L=veh.l/100,W=veh.w/100,H=veh.h/100;
+ [1.0,.997].forEach((sc,i)=>{const wf=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(L*sc,H*sc,W*sc)),new THREE.LineBasicMaterial({color:s.wire,transparent:true,opacity:i===0?.9:.4}));wf.position.set(L/2,H/2,W/2);cGrp.add(wf);});
+ const floor=new THREE.Mesh(new THREE.PlaneGeometry(L,W),new THREE.MeshStandardMaterial({color:s.floor,roughness:.9}));floor.rotation.x=-Math.PI/2;floor.position.set(L/2,.001,W/2);floor.receiveShadow=true;cGrp.add(floor);
+ const grid=new THREE.GridHelper(Math.max(L,W)*1.6,20,s.g1,s.g2);grid.position.set(L/2,.002,W/2);cGrp.add(grid);
+ orb.tx=L/2;orb.ty=H/4;orb.tz=W/2;orb.r=Math.max(L,W,H)*2.4;orb.phi=1.05;orb.th=-.6;
+ document.getElementById('vveh-cbm').textContent=cbm(veh.l,veh.w,veh.h).toFixed(3)+' m³';
+}
+function buildVItems(){clrGrp(iGrp);document.getElementById('empty').style.display=vPlaced.length?'none':'block';addItemMeshes(vPlaced,0);buildVHeat();vUpdStats();}
+function buildVHeat(){
+ clrGrp(wGrp);if(!vPlaced.length)return;
+ const GRID=8,L=veh.l/100,W=veh.w/100,cL=L/GRID,cW=W/GRID;
+ const grid=Array.from({length:GRID},()=>Array(GRID).fill(0));let mx=0;
+ for(const it of vPlaced){const px=it.px/100,pz=it.pz/100,il=it.l/100,iw=it.w/100;const i0=Math.floor(px/cL),i1=Math.min(GRID-1,Math.floor((px+il)/cL));const j0=Math.floor(pz/cW),j1=Math.min(GRID-1,Math.floor((pz+iw)/cW));const nc=Math.max(1,(i1-i0+1)*(j1-j0+1));for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++){if(i>=0&&i<GRID&&j>=0&&j<GRID){grid[i][j]+=it.weight/nc;mx=Math.max(mx,grid[i][j]);}}}
+ if(!mx)return;
+ for(let i=0;i<GRID;i++)for(let j=0;j<GRID;j++){const n=grid[i][j]/mx;if(n<.02)continue;let rv,gv,bv;if(n<.5){const t=n*2;rv=Math.round(29+t*216);gv=158;bv=Math.round(117-t*106);}else{const t=(n-.5)*2;rv=Math.round(245-t*19);gv=Math.round(159-t*84);bv=Math.round(11+t*63);}const pm=new THREE.Mesh(new THREE.PlaneGeometry(cL*.85,cW*.85),new THREE.MeshBasicMaterial({color:new THREE.Color(rv/255,gv/255,bv/255),transparent:true,opacity:.5,side:THREE.DoubleSide}));pm.rotation.x=-Math.PI/2;pm.position.set(i*cL+cL/2,.01,j*cW+cW/2);wGrp.add(pm);}
+}
+function vUpdStats(){const vol=veh.l*veh.w*veh.h;let uv=0,tw=0,tc=0;for(const p of vPlaced){uv+=p.l*p.w*p.h;tw+=p.weight;tc+=cbm(p.l,p.w,p.h);}const tot=vCList.reduce((s,c)=>s+c.qty,0);document.getElementById('s-vol').textContent=vol?Math.round(uv/vol*100)+'%':'0%';const we=document.getElementById('s-wt');we.textContent=tw.toLocaleString()+' kg';we.style.color=tw>veh.mw?'var(--red)':tw>veh.mw*.85?'var(--amber)':'';document.getElementById('s-items').textContent=vPlaced.length+' / '+tot;document.getElementById('s-cbm').textContent=tc.toFixed(3)+' m³';}
+
+function itemRow(c,tab){
+ const ic=cbm(c.l,c.w,c.h),tc=ic*c.qty;
+ return`<div class="ci">
+  <div class="csw" style="background:${c.color}" onclick="editItem('${c.id}','${tab}')" title="Click to edit"></div>
+  <div class="ci-info">
+   <div class="cn">${c.name}</div>
+   <div class="cd">${c.l}&#215;${c.w}&#215;${c.h}cm &middot; ${c.weight}kg</div>
+   <div class="ci-tags">
+    <span class="cb">${ic.toFixed(3)} m&#179;</span>
+    ${c.qty>1?`<span class="cb">${tc.toFixed(3)} total</span>`:''}
+    ${c.fragile?'<span class="fragile-badge">&#9888; Fragile</span>':''}
+   </div>
+  </div>
+  <div class="ci-actions">
+   <button class="ci-btn edit" onclick="editItem('${c.id}','${tab}')" title="Edit">&#9998;</button>
+   <button class="ci-btn dup" onclick="dupItem('${c.id}','${tab}')" title="Duplicate">&#10697;</button>
+   <button class="ci-btn del" onclick="${tab}RmC('${c.id}')" title="Delete">&#215;</button>
+  </div>
+  <span style="font-size:10px;color:var(--text2);padding-top:1px;flex-shrink:0">&#215;${c.qty}</span>
+ </div>`;
+}
+
+function vRenderList(){
+ const el=document.getElementById('vclist'),f=document.getElementById('vcbmf');
+ if(!vCList.length){el.innerHTML='<div class="emptylist">No cargo added yet</div>';f.style.display='none';return;}
+ let tot=0;el.innerHTML=vCList.map(c=>{tot+=cbm(c.l,c.w,c.h)*c.qty;return itemRow(c,'v');}).join('');
+ f.style.display='block';document.getElementById('vlist-cbm').textContent=tot.toFixed(3)+' m³';document.getElementById('vveh-cbm').textContent=cbm(veh.l,veh.w,veh.h).toFixed(3)+' m³';
+}
+function applyV(){veh.l=+document.getElementById('vl').value||1;veh.w=+document.getElementById('vw').value||1;veh.h=+document.getElementById('vh').value||1;veh.mw=+document.getElementById('vmw').value||1;vPlaced=[];buildVCont();buildVItems();vRenderList();markFresh();}
+document.getElementById('vp2').addEventListener('change',function(){if(!this.value)return;const[l,w,h]=this.value.split(',').map(Number);document.getElementById('vl').value=l;document.getElementById('vw').value=w;document.getElementById('vh').value=h;});
+function vAddC(){const name=document.getElementById('vcn').value.trim()||'Item';const l=+document.getElementById('vcl').value||1,w=+document.getElementById('vcw').value||1,h=+document.getElementById('vch').value||1,wt=+document.getElementById('vcwt').value||0,qty=+document.getElementById('vcq').value||1;vCList.push({id:Date.now().toString(),name,l,w,h,weight:wt,qty,color:vnc(),fragile:false});vRenderList();markStale();document.getElementById('vcn').value='';}
+function vRmC(id){vCList=vCList.filter(c=>c.id!==id);vRenderList();markStale();}
+function toggleDoubleStack(){vDoubleStack=!vDoubleStack;const btn=document.getElementById('ds-btn'),badge=document.getElementById('ds-badge'),sub=document.getElementById('ds-sub');if(vDoubleStack){btn.className='ds-toggle on';badge.textContent='ON';sub.textContent='Items can stack on top';}else{btn.className='ds-toggle off';badge.textContent='OFF';sub.textContent='Single layer only';}markStale();}
+
+// ── PACKING ALGORITHMS ────────────────────────────────────────────────────────
+function packVehicle(cl,cw,ch,items,allowStack){
+ const sorted=[...items].sort((a,b)=>(b.l*b.w*b.h)-(a.l*a.w*a.h));const out=[],fail=[];
+ function topAt(px,pz,il,iw){const eps=.5;let h=0;for(const p of out){if(px+il-eps>p.px&&px+eps<p.px+p.l&&pz+iw-eps>p.pz&&pz+eps<p.pz+p.w)h=Math.max(h,p.py+p.h);}return h;}
+ function ok(px,py,pz,il,ih,iw){if(px<-.5||px+il>cl+.5||pz<-.5||pz+iw>cw+.5||py+ih>ch+.5)return false;return Math.abs(topAt(px,pz,il,iw)-py)<1;}
+ for(const it of sorted){let done=false;for(const [il,iw] of [[it.l,it.w],[it.w,it.l]]){if(done)break;if(il>cl+.5||iw>cw+.5||it.h>ch+.5)continue;
+  const xs=new Set([0]),zs=new Set([0]),ys=new Set([0]);
+  for(const p of out){xs.add(Math.round(p.px));xs.add(Math.round(p.px+p.l));zs.add(Math.round(p.pz));zs.add(Math.round(p.pz+p.w));if(!p.fragile)ys.add(Math.round(p.py+p.h));} // fragile items cannot be used as a base
+  const sY=[...ys].sort((a,b)=>a-b),sX=[...xs].sort((a,b)=>a-b),sZ=[...zs].sort((a,b)=>a-b);
+  for(const py of sY){if(done)break;if(py+it.h>ch+.5)continue;if(!allowStack&&py>=1)continue;
+   if(py<1){for(const px of sX){if(done)break;if(px+il>cl+.5)continue;for(const pz of sZ){if(pz+iw>cw+.5)continue;if(ok(px,0,pz,il,it.h,iw)){out.push({...it,l:il,w:iw,px,py:0,pz});done=true;break;}}}}
+   else{const sup=out.filter(p=>Math.abs(p.py+p.h-py)<1&&!p.fragile);if(!sup.length)continue; // skip fragile supporters
+    sup.sort((a,b)=>a.px-b.px||a.pz-b.pz);const tried=new Set();
+    const tryG=(grp)=>{if(done)return;const key=grp.map(g=>g.px+','+g.pz).sort().join('|');if(tried.has(key))return;tried.add(key);const minZ=Math.min(...grp.map(g=>g.pz)),maxZ=Math.max(...grp.map(g=>g.pz+g.w));const minX=Math.min(...grp.map(g=>g.px)),maxX=Math.max(...grp.map(g=>g.px+g.l));if(iw>maxZ-minZ+.5||il>maxX-minX+.5)return;const cz=Math.round(minZ+(maxZ-minZ-iw)/2),cx=Math.round(minX+(maxX-minX-il)/2);if(cx<0||cx+il>cl+.5||cz<0||cz+iw>cw+.5)return;if(cx<minX-.5||cx+il>maxX+.5||cz<minZ-.5||cz+iw>maxZ+.5)return;if(!ok(cx,py,cz,il,it.h,iw))return;out.push({...it,l:il,w:iw,px:cx,py,pz:cz});done=true;};
+    for(const s of sup){tryG([s]);if(done)break;const adj=sup.filter(p=>p!==s&&Math.abs(p.px-s.px)<1&&(Math.abs(p.pz+p.w-s.pz)<1.5||Math.abs(s.pz+s.w-p.pz)<1.5));for(const a of adj.sort((a,b)=>a.pz-b.pz)){tryG([s,a]);if(done)break;}if(done)break;for(let i=0;i<adj.length&&!done;i++)for(let j=i+1;j<adj.length&&!done;j++)tryG([s,adj[i],adj[j]]);if(done)break;}}
+  }}if(!done)fail.push(it);}return{out,fail};
+}
+function packPallet(cl,cw,ch,items){
+ const sorted=[...items].sort((a,b)=>b.h-a.h||(b.l*b.w)-(a.l*a.w));const out=[],fail=[];
+ function topAt(px,pz,il,iw){const eps=.5;let h=0;for(const p of out){if(px+il-eps>p.px&&px+eps<p.px+p.l&&pz+iw-eps>p.pz&&pz+eps<p.pz+p.w)h=Math.max(h,p.py+p.h);}return h;}
+ function ok(px,py,pz,il,ih,iw){if(px<-.5||px+il>cl+.5||pz<-.5||pz+iw>cw+.5||py+ih>ch+.5)return false;return Math.abs(topAt(px,pz,il,iw)-py)<1;}
+ for(const it of sorted){let done=false;const orients=[[it.l,it.w],[it.w,it.l]].filter(([il,iw])=>il<=cl+.5&&iw<=cw+.5&&it.h<=ch+.5);
+  for(const [il,iw] of orients){if(done)break;const xs=new Set([0]),zs=new Set([0]),ys=new Set([0]);for(const p of out){xs.add(Math.round(p.px));xs.add(Math.round(p.px+p.l));zs.add(Math.round(p.pz));zs.add(Math.round(p.pz+p.w));if(!p.fragile)ys.add(Math.round(p.py+p.h));}
+   const sY=[...ys].sort((a,b)=>a-b),sX=[...xs].sort((a,b)=>a-b),sZ=[...zs].sort((a,b)=>a-b);
+   for(const py of sY){if(done)break;if(py+it.h>ch+.5)continue;for(const px of sX){if(done)break;if(px+il>cl+.5)continue;for(const pz of sZ){if(pz+iw>cw+.5)continue;if(ok(px,py,pz,il,it.h,iw)){out.push({...it,l:il,w:iw,px,py,pz});done=true;break;}}}}
+  }if(!done)fail.push(it);}return{out,fail};
+}
+function vDoStack(){const exp=[];for(const c of vCList)for(let i=0;i<c.qty;i++)exp.push({...c,uid:c.id+'_'+i});const r=packVehicle(veh.l,veh.w,veh.h,exp,vDoubleStack);vPlaced=r.out;buildVItems();markFresh();const mode=vDoubleStack?'(double stack)':'(single layer)';showMsg(vPlaced.length+' items placed '+mode+(r.fail.length?' &middot; '+r.fail.length+' didn\'t fit':''));}
+function vClearAll(){vCList=[];vPlaced=[];vci=0;vRenderList();clrGrp(iGrp);clrGrp(wGrp);document.getElementById('empty').style.display='block';vUpdStats();document.getElementById('msg').style.display='none';markFresh();}
+
+// ── PALLET SCENE ──────────────────────────────────────────────────────────────
+function applyPalletPreset(){const v=document.getElementById('pp').value;if(!v)return;const[l,w,mh,mw]=v.split(',').map(Number);document.getElementById('pl').value=l;document.getElementById('pw').value=w;document.getElementById('pmh').value=mh;document.getElementById('pmw').value=mw;applyPallet();}
+function applyPallet(){palCfg.l=+document.getElementById('pl').value||1;palCfg.w=+document.getElementById('pw').value||1;palCfg.maxH=+document.getElementById('pmh').value||1;palCfg.mw=+document.getElementById('pmw').value||1;palResults=[];curPal=0;buildPalletScene();pRenderList();markFresh();}
+function buildPalletScene(){
+ clrGrp(cGrp);clrGrp(iGrp);clrGrp(wGrp);document.getElementById('pnav').style.display='none';document.getElementById('pcard').style.display='none';
+ const s=SC(),L=palCfg.l/100,W=palCfg.w/100,PH=PALLET_H/100,MH=palCfg.maxH/100;
+ const pGeo=new THREE.BoxGeometry(L,PH,W);const pMesh=new THREE.Mesh(pGeo,new THREE.MeshStandardMaterial({color:s.palBase,roughness:.85}));pMesh.position.set(L/2,PH/2,W/2);pMesh.receiveShadow=true;cGrp.add(pMesh);
+ const pEdge=new THREE.LineSegments(new THREE.EdgesGeometry(pGeo),new THREE.LineBasicMaterial({color:s.palEdge}));pEdge.position.copy(pMesh.position);cGrp.add(pEdge);
+ [1.0,.997].forEach((sc,i)=>{const sGeo=new THREE.BoxGeometry(L*sc,MH-PH,W*sc);const sWire=new THREE.LineSegments(new THREE.EdgesGeometry(sGeo),new THREE.LineBasicMaterial({color:s.sWire,transparent:true,opacity:i===0?.5:.2}));sWire.position.set(L/2,PH+(MH-PH)/2,W/2);cGrp.add(sWire);});
+ const pgrid=new THREE.GridHelper(Math.max(L,W)*2.5,12,s.g1,s.g2);pgrid.position.set(L/2,0,W/2);cGrp.add(pgrid);
+ if(palResults.length>0&&curPal<palResults.length){addItemMeshes(palResults[curPal].placed,PH);const pd=palResults[curPal];document.getElementById('pcard-body').innerHTML=`<div><span style="color:var(--text2)">Items&nbsp;</span><b>${pd.placed.length}</b></div><div><span style="color:var(--text2)">Weight&nbsp;</span><b>${pd.weight.toLocaleString()} kg${pd.weight>palCfg.mw?' <span style="color:var(--red)">&#9888;</span>':''}</b></div><div><span style="color:var(--text2)">CBM&nbsp;</span><b>${pd.cbm.toFixed(3)} m&#179;</b></div>`;document.getElementById('pcard').style.display='block';}
+ if(palResults.length>1){document.getElementById('pnav').style.display='flex';document.getElementById('pnav-label').textContent='Pallet '+(curPal+1)+' of '+palResults.length;}
+ document.getElementById('empty').style.display=palResults.length?'none':'block';document.getElementById('empty-txt').textContent='Add items and click Stack pallets';
+ const mx=Math.max(palCfg.l,palCfg.w,palCfg.maxH)/100;orb.tx=L/2;orb.ty=MH/2;orb.tz=W/2;orb.r=mx*4;orb.phi=1.0;orb.th=-.55;pUpdStats();
+}
+function pUpdStats(){if(!palResults.length){document.getElementById('s-vol').textContent='0%';document.getElementById('s-wt').textContent='0 kg';document.getElementById('s-items').textContent='0 / 0';document.getElementById('s-cbm').textContent='0.000 m³';return;}const tot=pCList.reduce((s,c)=>s+c.qty,0);const allP=palResults.reduce((s,p)=>s+p.placed.length,0);const totW=palResults.reduce((s,p)=>s+p.weight,0);const totC=palResults.reduce((s,p)=>s+p.cbm,0);const palV=cbm(palCfg.l,palCfg.w,palCfg.maxH-PALLET_H)*palResults.length;document.getElementById('s-vol').textContent=palV>0?Math.round(totC/palV*100)+'%':'0%';document.getElementById('s-wt').textContent=totW.toLocaleString()+' kg';document.getElementById('s-items').textContent=allP+' / '+tot;document.getElementById('s-cbm').textContent=totC.toFixed(3)+' m³';}
+function pRenderList(){
+ const el=document.getElementById('pclist'),f=document.getElementById('pcbmf'),sb=document.getElementById('psum-box');
+ if(!pCList.length){el.innerHTML='<div class="emptylist">No items added yet</div>';f.style.display='none';sb.style.display='none';return;}
+ let tot=0;el.innerHTML=pCList.map(c=>{tot+=cbm(c.l,c.w,c.h)*c.qty;return itemRow(c,'p');}).join('');
+ f.style.display='block';document.getElementById('plist-cbm').textContent=tot.toFixed(3)+' m³';document.getElementById('ppallet-cbm').textContent=cbm(palCfg.l,palCfg.w,palCfg.maxH-PALLET_H).toFixed(3)+' m³';
+ if(palResults.length>0){sb.style.display='block';let html='';if(palResults.length>1)html+=`<div class="psum" style="border-color:var(--accent);margin-bottom:6px"><div class="psum-row"><span style="color:var(--text2)">Total pallets</span><b style="color:var(--accent-text)">${palResults.length}</b></div><div class="psum-row"><span style="color:var(--text2)">Avg weight</span><b>${(palResults.reduce((s,p)=>s+p.weight,0)/palResults.length).toFixed(0)} kg</b></div><div class="psum-row"><span style="color:var(--text2)">Avg CBM</span><b>${(palResults.reduce((s,p)=>s+p.cbm,0)/palResults.length).toFixed(3)} m&#179;</b></div></div>`;html+=palResults.map((p,i)=>`<div class="psum"><div style="font-size:11px;font-weight:700;color:var(--accent-text);margin-bottom:2px">Pallet ${i+1}</div><div class="psum-row"><span style="color:var(--text2)">Items</span><b>${p.placed.length}</b></div><div class="psum-row"><span style="color:var(--text2)">Weight</span><b>${p.weight.toLocaleString()} kg${p.weight>palCfg.mw?' <span style="color:var(--red);font-size:10px">&#9888;</span>':''}</b></div><div class="psum-row"><span style="color:var(--text2)">CBM</span><b>${p.cbm.toFixed(3)} m&#179;</b></div></div>`).join('');document.getElementById('psum-content').innerHTML=html;}
+}
+function pDoStack(){const exp=[];for(const c of pCList)for(let i=0;i<c.qty;i++)exp.push({...c,uid:c.id+'_'+i});palResults=[];let rem=[...exp];const stackH=palCfg.maxH-PALLET_H;while(rem.length>0){const r=packPallet(palCfg.l,palCfg.w,stackH,rem);if(!r.out.length)break;palResults.push({placed:r.out,weight:r.out.reduce((s,p)=>s+p.weight,0),cbm:r.out.reduce((s,p)=>s+cbm(p.l,p.w,p.h),0)});rem=r.fail;}curPal=0;buildPalletScene();pRenderList();markFresh();showMsg(palResults.length+' pallet'+(palResults.length!==1?'s':'')+' needed &middot; '+exp.length+' items total');}
+function prevP(){if(curPal>0){curPal--;buildPalletScene();pRenderList();}}
+function nextP(){if(curPal<palResults.length-1){curPal++;buildPalletScene();pRenderList();}}
+function pAddC(){const name=document.getElementById('pcn').value.trim()||'Item';const l=+document.getElementById('pcl').value||1,w=+document.getElementById('pcw').value||1,h=+document.getElementById('pch').value||1,wt=+document.getElementById('pcwt').value||0,qty=+document.getElementById('pcq').value||1;pCList.push({id:Date.now().toString(),name,l,w,h,weight:wt,qty,color:pnc(),fragile:false});pRenderList();markStale();document.getElementById('pcn').value='';}
+function pRmC(id){pCList=pCList.filter(c=>c.id!==id);pRenderList();markStale();}
+function pClearAll(){pCList=[];palResults=[];curPal=0;pci=0;pRenderList();clrGrp(iGrp);document.getElementById('pnav').style.display='none';document.getElementById('pcard').style.display='none';document.getElementById('empty').style.display='block';pUpdStats();document.getElementById('msg').style.display='none';markFresh();}
+
+// ── EXPORT REPORT ─────────────────────────────────────────────────────────────
+function exportReport(){
+ const date=new Date().toLocaleString();
+ const tab=activeTab;
+ const items=tab==='vehicle'?vCList:pCList;
+ const placed=tab==='vehicle'?vPlaced:palResults.flatMap(p=>p.placed);
+ const totalW=placed.reduce((s,p)=>s+p.weight,0);
+ const totalC=placed.reduce((s,p)=>s+cbm(p.l,p.w,p.h),0);
+ const config=tab==='vehicle'?`${veh.l}×${veh.w}×${veh.h} cm &mdash; Max ${veh.mw.toLocaleString()} kg`:`${palCfg.l}×${palCfg.w}cm, max stack ${palCfg.maxH}cm, ${palCfg.mw}kg/pallet`;
+ const configLabel=tab==='vehicle'?'Vehicle':'Pallet';
+ const palSummary=tab==='pallet'&&palResults.length>1?`<p><b>Total pallets needed:</b> ${palResults.length}</p>`:' ';
+ const rows=items.map(c=>`<tr><td>${c.name}${c.fragile?' <span style="color:#d97706">⚠ Fragile</span>':''}</td><td>${c.l}×${c.w}×${c.h}</td><td>${c.weight}</td><td>${c.qty}</td><td>${(cbm(c.l,c.w,c.h)*c.qty).toFixed(3)}</td></tr>`).join('');
+ const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Load Report</title>
+<style>body{font-family:Arial,sans-serif;padding:30px;color:#111;max-width:900px;margin:0 auto;}h1{font-size:22px;margin-bottom:4px;}h2{font-size:14px;color:#555;font-weight:400;margin-bottom:20px;}table{width:100%;border-collapse:collapse;margin:16px 0;}th{background:#f0f0f0;text-align:left;padding:8px 10px;font-size:12px;border:1px solid #ccc;}td{padding:7px 10px;font-size:12px;border:1px solid #ddd;}tr:nth-child(even){background:#fafafa;}.summary{background:#f8f8f8;border:1px solid #ddd;border-radius:6px;padding:14px 18px;margin:16px 0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}.sval{font-size:20px;font-weight:700;}.slbl{font-size:11px;color:#666;margin-top:2px;}@media print{button{display:none;}}</style></head>
+<body>
+<h1>&#9635; Cargo Load Report</h1>
+<h2>Generated ${date}</h2>
+<p><b>${configLabel}:</b> ${config}</p>${palSummary}
+<div class="summary">
+ <div><div class="sval">${placed.length} / ${items.reduce((s,c)=>s+c.qty,0)}</div><div class="slbl">Items placed</div></div>
+ <div><div class="sval">${totalW.toLocaleString()} kg</div><div class="slbl">Total weight</div></div>
+ <div><div class="sval">${totalC.toFixed(3)} m³</div><div class="slbl">Total CBM</div></div>
+</div>
+<table><thead><tr><th>Item</th><th>Dimensions (cm)</th><th>Weight (kg)</th><th>Qty</th><th>Total CBM (m³)</th></tr></thead><tbody>${rows}</tbody></table>
+<button onclick="window.print()" style="margin-top:10px;padding:8px 20px;background:#1a72d4;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:13px;">&#128438; Print / Save as PDF</button>
+</body></html>`;
+ const win=window.open('','_blank');win.document.write(html);win.document.close();
+}
+
+// ── SAVE / LOAD ───────────────────────────────────────────────────────────────
+function saveLoad(){const now=new Date();const data={version:2,savedAt:now.toISOString(),activeTab,vehicle:{config:{...veh},doubleStack:vDoubleStack,items:vCList,placed:vPlaced},pallet:{config:{...palCfg},items:pCList,results:palResults,curPal}};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;const ds=now.toISOString().slice(0,10),ts=now.toTimeString().slice(0,5).replace(':','-');a.download='cargo-load-'+ds+'-'+ts+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);showMsg('&#10003; Saved','success');}
+function openLoad(){document.getElementById('file-input').value='';document.getElementById('file-input').click();}
+function loadFromFile(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>{try{const data=JSON.parse(ev.target.result);if(!data.version||!data.vehicle||!data.pallet)throw new Error('Invalid file');veh=data.vehicle.config||veh;vDoubleStack=data.vehicle.doubleStack!==undefined?data.vehicle.doubleStack:true;vCList=data.vehicle.items||[];vPlaced=data.vehicle.placed||[];palCfg=data.pallet.config||palCfg;pCList=data.pallet.items||[];palResults=data.pallet.results||[];curPal=data.pallet.curPal||0;vci=vCList.length%PAL.length;pci=pCList.length%PAL.length;document.getElementById('vl').value=veh.l;document.getElementById('vw').value=veh.w;document.getElementById('vh').value=veh.h;document.getElementById('vmw').value=veh.mw;document.getElementById('pl').value=palCfg.l;document.getElementById('pw').value=palCfg.w;document.getElementById('pmh').value=palCfg.maxH;document.getElementById('pmw').value=palCfg.mw;const btn=document.getElementById('ds-btn'),badge=document.getElementById('ds-badge'),sub=document.getElementById('ds-sub');if(vDoubleStack){btn.className='ds-toggle on';badge.textContent='ON';sub.textContent='Items can stack on top';}else{btn.className='ds-toggle off';badge.textContent='OFF';sub.textContent='Single layer only';}switchTab(data.activeTab||'vehicle');showMsg('&#10003; Restored from '+new Date(data.savedAt).toLocaleString(),'success');markFresh();}catch(err){showMsg('&#10007; '+err.message,'err');}};reader.readAsText(file);}
+
+// ── AI IMPORT ─────────────────────────────────────────────────────────────────
+let apiKey=sessionStorage.getItem('cargo_api_key')||'';
+let pendingImportItems=[];
+function showAiStep(id){document.querySelectorAll('.ai-step').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function openAiModal(){
+ document.getElementById('ai-target-label').textContent=activeTab==='vehicle'?'Vehicle loading':'Pallet stacker';
+ document.getElementById('ai-modal').classList.add('open');
+ if(window.location.protocol==='file:'){showAiStep('ai-step-fileprotocol');return;}
+ showAiStep(apiKey?'ai-step-upload':'ai-step-key');
+}
+function switchOs(os){document.querySelectorAll('.os-tab').forEach((t,i)=>t.classList.toggle('active',['win','mac','node'][i]===os));document.querySelectorAll('.os-section').forEach(s=>s.classList.remove('active'));document.getElementById('os-'+os).classList.add('active');}
+function copyCmd(txt){navigator.clipboard.writeText(txt).then(()=>showMsg('Copied to clipboard','success')).catch(()=>{});}
+function closeAiModal(){document.getElementById('ai-modal').classList.remove('open');}
+function checkKeyInput(){document.getElementById('key-continue-btn').disabled=!document.getElementById('api-key-input').value.trim().startsWith('sk-');}
+function saveKeyAndContinue(){const v=document.getElementById('api-key-input').value.trim();if(!v.startsWith('sk-'))return;apiKey=v;sessionStorage.setItem('cargo_api_key',apiKey);showAiStep('ai-step-upload');}
+function clearApiKey(){apiKey='';sessionStorage.removeItem('cargo_api_key');document.getElementById('api-key-input').value='';showAiStep('ai-step-key');}
+const aiDz=document.getElementById('ai-dropzone');
+aiDz.addEventListener('dragover',e=>{e.preventDefault();aiDz.classList.add('hover');});
+aiDz.addEventListener('dragleave',()=>aiDz.classList.remove('hover'));
+aiDz.addEventListener('drop',e=>{e.preventDefault();aiDz.classList.remove('hover');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))processImageFile(f);});
+document.addEventListener('dragover',e=>{if([...e.dataTransfer.types].includes('Files')){e.preventDefault();document.getElementById('drop-overlay').classList.add('active');}});
+document.addEventListener('dragleave',e=>{if(!e.relatedTarget)document.getElementById('drop-overlay').classList.remove('active');});
+document.addEventListener('drop',e=>{e.preventDefault();document.getElementById('drop-overlay').classList.remove('active');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/')){if(!apiKey){openAiModal();return;}openAiModal();processImageFile(f);}});
+function handleImgFile(e){const f=e.target.files[0];if(f)processImageFile(f);}
+function processImageFile(file){const reader=new FileReader();reader.onload=async(ev)=>{const dataUrl=ev.target.result;document.getElementById('ai-preview-img').src=dataUrl;document.getElementById('ai-result-img').src=dataUrl;showAiStep('ai-step-processing');try{const result=await analyseImage(dataUrl.split(',')[1],file.type);showAiResults(result);}catch(err){if(err.message==='file_protocol'){showAiStep('ai-step-fileprotocol');}else{closeAiModal();showMsg('&#10007; '+err.message,'err');}}};reader.readAsDataURL(file);}
+async function analyseImage(base64,mediaType){
+ if(window.location.protocol==='file:')throw new Error('file_protocol');
+ let res;
+ try{
+  res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:`You are a freight expert. Analyse this image and extract cargo items. Return ONLY raw JSON with no markdown:\n{"items":[{"name":"...","l":0,"w":0,"h":0,"weight":0,"qty":1}]}\nConvert dimensions: mm÷10=cm, inches×2.54=cm. Convert weight: lbs×0.453=kg. Estimate missing dimensions based on item type. Return {"items":[]} if no cargo found.`,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:'Extract all cargo items.'}]}]})});
+ }catch(fetchErr){
+  if(fetchErr.name==='TypeError'&&fetchErr.message.includes('fetch')){
+   throw new Error('Network error — check your internet connection. If you opened this file by double-clicking, use a local web server instead (click AI Import for instructions).');
+  }
+  throw fetchErr;
+ }
+ if(res.status===401)throw new Error('Invalid API key — check your key at console.anthropic.com');
+ if(res.status===429)throw new Error('Rate limit reached — wait a moment and try again');
+ if(res.status===413)throw new Error('Image too large — try a smaller screenshot');
+ if(!res.ok){let e;try{e=await res.json();}catch{throw new Error('API error '+res.status);}throw new Error(e.error?.message||'API error '+res.status);}
+ const data=await res.json();
+ const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+ try{return JSON.parse(text.replace(/```json\n?|```\n?/g,'').trim());}
+ catch{throw new Error('Could not read AI response — the image may be unclear or too small');}
+}
+function showAiResults(data){const items=(data.items||[]).filter(it=>it.name);pendingImportItems=items;const h=document.getElementById('ai-result-heading'),s=document.getElementById('ai-result-sub'),body=document.getElementById('ai-result-body'),btn=document.getElementById('ai-import-btn');if(!items.length){h.textContent='Nothing found';s.textContent='Claude couldn\'t find cargo details. Try a clearer screenshot of a freight quote or packing list.';body.innerHTML='';btn.disabled=true;}else{h.textContent='Found '+items.length+' item'+(items.length!==1?'s':'');s.textContent='Review and adjust quantities before importing.';btn.disabled=false;body.innerHTML=`<table class="ai-result-table"><thead><tr><th>Item</th><th>L&#215;W&#215;H (cm)</th><th>Wt (kg)</th><th>Qty</th></tr></thead><tbody>${items.map((it,i)=>`<tr><td><b>${it.name}</b></td><td style="color:var(--text2)">${Math.round(it.l||0)}&#215;${Math.round(it.w||0)}&#215;${Math.round(it.h||0)}</td><td style="color:var(--text2)">${(it.weight||0).toFixed(1)}</td><td><input type="number" id="ai-qty-${i}" value="${Math.max(1,Math.round(it.qty||1))}" min="1" style="width:52px"></td></tr>`).join('')}</tbody></table>`;}showAiStep('ai-step-results');}
+function confirmAiImport(){pendingImportItems.forEach((it,i)=>{const qty=+document.getElementById('ai-qty-'+i).value||1;const item={id:Date.now().toString()+i,name:it.name,l:Math.max(1,Math.round(it.l||10)),w:Math.max(1,Math.round(it.w||10)),h:Math.max(1,Math.round(it.h||10)),weight:+(it.weight||0).toFixed(1),qty,color:activeTab==='vehicle'?vnc():pnc(),fragile:false};if(activeTab==='vehicle')vCList.push(item);else pCList.push(item);});closeAiModal();if(activeTab==='vehicle'){vRenderList();vDoStack();}else{pRenderList();pDoStack();}showMsg('&#10024; '+pendingImportItems.length+' item types imported &amp; stacked','success');}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────────
+function switchTab(tab){activeTab=tab;document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='vehicle'?0:1)));document.getElementById('vsb').style.display=tab==='vehicle'?'flex':'none';document.getElementById('psb').style.display=tab==='pallet'?'flex':'none';document.getElementById('pnav').style.display='none';document.getElementById('pcard').style.display='none';clrGrp(cGrp);clrGrp(iGrp);clrGrp(wGrp);if(tab==='vehicle'){buildVCont();buildVItems();document.getElementById('empty-txt').textContent='Add cargo and click Auto stack';vRenderList();}else{buildPalletScene();pRenderList();}markFresh();}
+
+let msgTimer=null;
+function showMsg(t,type){const el=document.getElementById('msg');el.innerHTML=t;el.className=type||'';el.style.display='block';clearTimeout(msgTimer);msgTimer=setTimeout(()=>el.style.display='none',6000);}
+
+setTimeout(()=>{resize();applySceneTheme();buildVCont();},50);
+</script>
+</body>
+</html>
